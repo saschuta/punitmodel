@@ -46,9 +46,8 @@ class Model:
 
         parameters = np.array([v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau, noise_strength,
                       input_scaling, dend_tau, ref_period])
-        stimulus = rectify_stimulus_array(stimulus)
 
-        output_voltage, adaption, spiketimes, input_voltage = simulate_fast(stimulus, parameters)
+        output_voltage, adaption, spiketimes, input_voltage = simulate_fast(stimulus, *parameters)
         self.v1 = output_voltage
         self.adaption = adaption
         self.spiketimes = spiketimes
@@ -57,28 +56,14 @@ class Model:
         return spiketimes
 
 
-@jit(nopython=True)  # pre-compiles the code -> quite a bit faster
-def rectify_stimulus_array(stimulus_array: np.ndarray):
-    return np.array([x if x > 0 else 0 for x in stimulus_array])
-
-
 @jit(nopython=True)
-def simulate_fast(rectified_stimulus_array, parameters: np.ndarray):
-    v_zero = parameters[0]
-    a_zero = parameters[1]
-    step_size = parameters[2]
-    threshold = parameters[3]
-    v_base = parameters[4]
-    delta_a = parameters[5]
-    tau_a = parameters[6]
-    v_offset = parameters[7]
-    mem_tau = parameters[8]
-    noise_strength = parameters[9]
-    input_scaling = parameters[10]
-    dend_tau = parameters[11]
-    ref_period = parameters[12]
+def simulate_fast(stimulus_array, v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau, noise_strength, input_scaling, dend_tau, ref_period):
 
-    length = len(rectified_stimulus_array)
+    # rectify stimulus array:
+    stimulus_array[stimulus_array<0.0] = 0.0
+
+
+    length = len(stimulus_array)
     output_voltage = np.zeros(length)
     adaption = np.zeros(length)
     input_voltage = np.zeros(length)
@@ -86,7 +71,7 @@ def simulate_fast(rectified_stimulus_array, parameters: np.ndarray):
     spiketimes = []
     output_voltage[0] = v_zero
     adaption[0] = a_zero
-    input_voltage[0] = rectified_stimulus_array[0]
+    input_voltage[0] = stimulus_array[0]
 
     for i in range(1, length, 1):
 
@@ -94,7 +79,7 @@ def simulate_fast(rectified_stimulus_array, parameters: np.ndarray):
         noise = noise_strength * noise_value / np.sqrt(step_size)
 
         input_voltage[i] = input_voltage[i - 1] + (
-                    (-input_voltage[i - 1] + rectified_stimulus_array[i]) / dend_tau) * step_size
+                    (-input_voltage[i - 1] + stimulus_array[i]) / dend_tau) * step_size
 
         output_voltage[i] = output_voltage[i - 1] + ((v_base - output_voltage[i - 1] + v_offset + (
                     input_voltage[i] * input_scaling) - adaption[i - 1] + noise) / mem_tau) * step_size
