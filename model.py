@@ -29,7 +29,7 @@ class Model:
         self.spiketimes = []
         self.input_voltage = np.array([])
 
-    def simulate(self, stimulus):
+    def simulate(self, stimulus: np.ndarray):
         v_zero = self.parameters["v_zero"]
         a_zero = self.parameters["a_zero"]
         step_size = self.parameters["step_size"]
@@ -44,10 +44,10 @@ class Model:
         dend_tau = self.parameters["dend_tau"]
         ref_period = self.parameters["refractory_period"]
 
-        parameters = np.array([v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau, noise_strength,
-                      input_scaling, dend_tau, ref_period])
+        parameters = np.array([v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau,
+                               noise_strength, input_scaling, dend_tau, ref_period])
 
-        output_voltage, adaption, spiketimes, input_voltage = simulate_fast(stimulus, *parameters)
+        output_voltage, adaption, spiketimes, input_voltage = simulate_fast(stimulus.copy(), *parameters)
         self.v1 = output_voltage
         self.adaption = adaption
         self.spiketimes = spiketimes
@@ -60,8 +60,7 @@ class Model:
 def simulate_fast(stimulus_array, v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau, noise_strength, input_scaling, dend_tau, ref_period):
 
     # rectify stimulus array:
-    stimulus_array[stimulus_array<0.0] = 0.0
-
+    stimulus_array[stimulus_array < 0.0] = 0.0
 
     length = len(stimulus_array)
     output_voltage = np.zeros(length)
@@ -72,17 +71,16 @@ def simulate_fast(stimulus_array, v_zero, a_zero, step_size, threshold, v_base, 
     output_voltage[0] = v_zero
     adaption[0] = a_zero
     input_voltage[0] = stimulus_array[0]
+    noise = np.random.randn(length)
+    noise *= noise_strength / np.sqrt(step_size)
 
     for i in range(1, length, 1):
-
-        noise_value = np.random.normal()
-        noise = noise_strength * noise_value / np.sqrt(step_size)
 
         input_voltage[i] = input_voltage[i - 1] + (
                     (-input_voltage[i - 1] + stimulus_array[i]) / dend_tau) * step_size
 
         output_voltage[i] = output_voltage[i - 1] + ((v_base - output_voltage[i - 1] + v_offset + (
-                    input_voltage[i] * input_scaling) - adaption[i - 1] + noise) / mem_tau) * step_size
+                    input_voltage[i] * input_scaling) - adaption[i - 1] + noise[i]) / mem_tau) * step_size
 
         adaption[i] = adaption[i - 1] + ((-adaption[i - 1]) / tau_a) * step_size
 
