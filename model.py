@@ -1,97 +1,80 @@
-
 import numpy as np
-from numba import jit
+try:
+    from numba import jit
+except ImportError:
+    def jit(nopython):
+        def decorator_jit(func):
+            return func
+        return decorator_jit
 
 
-class Model:
-    DEFAULT_VALUES = {"mem_tau": 0.015,
-                      "v_base": 0.,
-                      "v_zero": 0.,
-                      "threshold": 1,
-                      "v_offset": -10.,
-                      "input_scaling": 60.,
-                      "delta_a": 0.08,
-                      "tau_a": 0.1,
-                      "a_zero": 2.,
-                      "noise_strength": 0.05,
-                      "step_size": 0.00005,
-                      "dend_tau": 0.001,
-                      "refractory_period": 0.001}
+def load_models(file):
+    """ Load model parameter from csv file.
 
-    def __init__(self, parameters=None):
-        if parameters is None:
-            self.parameters = self.DEFAULT_VALUES
-        else:
-            self.parameters = parameters
+    Parameters
+    ----------
+    file: string
+        Name of file with model parameters.
 
-        self.v1 = np.array([])
-        self.adaption = np.array([])
-        self.spiketimes = []
-        self.input_voltage = np.array([])
-
-    def simulate(self, stimulus: np.ndarray):
-        v_zero = self.parameters["v_zero"]
-        a_zero = self.parameters["a_zero"]
-        step_size = self.parameters["step_size"]
-        threshold = self.parameters["threshold"]
-        v_base = self.parameters["v_base"]
-        delta_a = self.parameters["delta_a"]
-        tau_a = self.parameters["tau_a"]
-        v_offset = self.parameters["v_offset"]
-        mem_tau = self.parameters["mem_tau"]
-        noise_strength = self.parameters["noise_strength"]
-        input_scaling = self.parameters["input_scaling"]
-        dend_tau = self.parameters["dend_tau"]
-        ref_period = self.parameters["refractory_period"]
-
-        parameters = np.array([v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau,
-                               noise_strength, input_scaling, dend_tau, ref_period])
-
-        output_voltage, adaption, spiketimes, input_voltage = simulate_fast(stimulus.copy(), *parameters)
-        self.v1 = output_voltage
-        self.adaption = adaption
-        self.spiketimes = spiketimes
-        self.input_voltage = input_voltage
-
-        return spiketimes
+    Returns
+    -------
+    parameters: list of dict
+        For each cell a dictionary with model parameters.
+    """
+    parameters = []
+    with open(file, 'r') as file:
+        header_line = file.readline()
+        header_parts = header_line.strip().split(",")
+        keys = header_parts
+        for line in file:
+            line_parts = line.strip().split(",")
+            parameter = {}
+            for i in range(len(keys)):
+                parameter[keys[i]] = float(line_parts[i]) if i > 0 else line_parts[i]
+            parameters.append(parameter)
+    return parameters
 
 
 @jit(nopython=True)
-def simulate_fast(stimulus_array, v_zero, a_zero, step_size, threshold, v_base, delta_a, tau_a, v_offset, mem_tau, noise_strength, input_scaling, dend_tau, ref_period):
+def simulate(stimulus, deltat=0.00005, v_zero=0.0, a_zero=2.0, threshold=1.0, v_base=0.0,
+             delta_a=0.08, tau_a=0.1, v_offset=-10.0, mem_tau=0.015, noise_strength=0.05,
+             input_scaling=60.0, dend_tau=0.001, ref_period=0.001, **kwargs):
+    """ Simulate a P-unit.
+
+    Returns
+    -------
+    spike_times: 1-D array
+        Simulated spike times in seconds.
+    """    
+    # initial conditions:
+    v_dend = stimulus[0]
+    v_mem = v_zero
+    adapt = a_zero
+
+    # prepare noise:    
+    noise = np.random.randn(len(stimulus))
+    noise *= noise_strength / np.sqrt(deltat)
 
     # rectify stimulus array:
-    stimulus_array[stimulus_array < 0.0] = 0.0
+    stimulus = np.array(stimulus)  # copy!
+    stimulus[stimulus < 0.0] = 0.0
 
-    length = len(stimulus_array)
-    output_voltage = np.zeros(length)
-    adaption = np.zeros(length)
-    input_voltage = np.zeros(length)
+    # integrate:
+    spike_times = []
+    for i in range(len(stimulus)):
+        v_dend += (-v_dend + stimulus[i]) / dend_tau * deltat
+        v_mem += (v_base - v_mem + v_offset + (
+                    v_dend * input_scaling) - adapt + noise[i]) / mem_tau * deltat
+        adapt += -adapt / tau_a * deltat
 
-    spiketimes = []
-    output_voltage[0] = v_zero
-    adaption[0] = a_zero
-    input_voltage[0] = stimulus_array[0]
-    noise = np.random.randn(length)
-    noise *= noise_strength / np.sqrt(step_size)
+        # refractory period:
+        if len(spike_times) > 0 and (deltat * i) - spike_times[-1] < ref_period + deltat/2:
+            v_mem = v_base
 
-    for i in range(1, length, 1):
+        # threshold crossing:
+        if v_mem > threshold:
+            v_mem = v_base
+            spike_times.append(i * deltat)
+            adapt += delta_a / tau_a
 
-        input_voltage[i] = input_voltage[i - 1] + (
-                    (-input_voltage[i - 1] + stimulus_array[i]) / dend_tau) * step_size
-
-        output_voltage[i] = output_voltage[i - 1] + ((v_base - output_voltage[i - 1] + v_offset + (
-                    input_voltage[i] * input_scaling) - adaption[i - 1] + noise[i]) / mem_tau) * step_size
-
-        adaption[i] = adaption[i - 1] + ((-adaption[i - 1]) / tau_a) * step_size
-
-        # refractory period
-        if len(spiketimes) > 0 and (step_size * i) - spiketimes[-1] < ref_period + step_size/2:
-            output_voltage[i] = v_base
-
-        # spiking
-        if output_voltage[i] > threshold:
-            output_voltage[i] = v_base
-            spiketimes.append(i * step_size)
-            adaption[i] += delta_a / tau_a
-
-    return output_voltage, adaption, spiketimes, input_voltage
+    return np.array(spike_times)
