@@ -20,20 +20,22 @@ def main():
     # load model parameter:
     parameters = load_models("models.csv")
 
-    print("Example with cell: {}".format(parameters[example_cell_idx]['cell']))
     model_params = parameters[example_cell_idx]
+    cell = model_params.pop('cell')
+    EODf = model_params.pop('EODf')
+    print("Example with cell:", cell)
 
     # generate EOD-like stimulus with an amplitude step:
     deltat = model_params["deltat"]
     stimulus_length = 2.0  # in seconds
     time = np.arange(0, stimulus_length, deltat)
     # baseline EOD with amplitude 1:
-    stimulus = np.sin(2*np.pi*model_params['EODf']*time)
+    stimulus = np.sin(2*np.pi*EODf*time)
     # amplitude step with given contrast:
     t0 = 0.5
     t1 = 1.5
     contrast = 0.3
-    stimulus[t0//deltat:t1//deltat] *= (1.0+contrast)
+    stimulus[int(t0//deltat):int(t1//deltat)] *= (1.0+contrast)
 
     # integrate the model:
     spikes = simulate(stimulus, **model_params)
