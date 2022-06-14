@@ -113,11 +113,37 @@ Whenever the membrane voltage $V_m(t)$ crosses the threshold $\theta=1$ a spike 
 
 \note[JB]{Sascha, list all parameters (table or itemize) plus time step of the model with typical values and the right (time) units}
 
+\begin{table}[h!]
+  \begin{center}
+    \caption{Model parameters.}
+    \label{tab:table1}
+    \begin{tabular}{l|c|l}
+      
+      parameter & explanation & unit \\
+      \hline
+      $\alpha$  & stimulus scaling factor &  \,[cm]\\
+      $\tau_{m}$  & membrane time constant &  \,[s]\\       
+      $\mu$  & bias current &  \,[mV]\\      
+      $\sqrt{2D}$  & noise strength &  \, [mV$\sqrt{\textup{s}}$] \\      
+      $\tau_{A}$  & adaption time constant &  \,[s]\\      
+      $\Delta A$  & adaption strength &  \,[mVs]\\      
+      $\tau_{d}$  & time constant of dendritic low-pass filter &  \,[s]\\      
+      $t_{ref}$  & absolute refractory period &  \,[s]\\     
+	  $\Delta t$  & time step &  \,[s]\\           
+    \end{tabular}
+  \end{center}
+\end{table}
+
+
+\note[SR]{Die Tabelle ist sehr ähnlich der in der Masterarbeit von Alex (Table 3), die Einheiten in der Tabelle der Masterarbeit scheinen jedoch nicht zu stimmen (ich denke es müssten Sekunden und keine Millisekunden sein). Die Einheiten habe ich mir bei einem Abgleich der Werte der csv Tabelle und dem Parameter Wertebereich in den Bildern der Masterabeit abgeleitet (figure 19).}
+
+
+
 
 \section{Numerical implementation}
 
 \note[JB]{Sascha: This is Alexander Ott's code from the git repository, right?}
-
+\note[SR]{Yes that is correct.}
 The ODEs are integrated by the Euler forward method with time-step $\Delta t$.
 
 For the intrinsic noise of the model $\xi(t)$ in each time step $i$ a random number is drawn from a normal distribution $\mathcal{N}(0,\,1)$ with zero mean and standard deviation of one. This number is multiplied with $\sqrt{2D}$ and divided by $\sqrt{\Delta t}$:
@@ -130,5 +156,6 @@ For the intrinsic noise of the model $\xi(t)$ in each time step $i$ a random num
 The noise strength values from the table in fact equal $\sqrt{2D}$ and not $D$.
 
 \note[JB]{we need to clean up that noise issue}
+\note[SR]{Wie genau?}
 
 \end{document}
