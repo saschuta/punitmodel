@@ -16,6 +16,7 @@
 \usepackage{array}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{graphicx}
 
 %%%%% equation references %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \renewcommand{\eqref}[1]{(\ref{#1})}
@@ -113,6 +114,7 @@ Whenever the membrane voltage $V_m(t)$ crosses the threshold $\theta=1$ a spike 
 
 \note[JB]{Sascha, list all parameters (table or itemize) plus time step of the model with typical values and the right (time) units}
 
+
 \begin{table}[h!]
   \begin{center}
     \caption{Model parameters.}
@@ -121,26 +123,32 @@ Whenever the membrane voltage $V_m(t)$ crosses the threshold $\theta=1$ a spike 
       
       parameter & explanation & median parameter \\
       \hline
-      $\alpha$  & stimulus scaling factor &  90.533695\,cm \\
+      $\alpha$  & stimulus scaling factor &  90.533695\\
       $\tau_{m}$  & membrane time constant &  0.001847\,s\\       
-      $\mu$  & bias current &  -17.1875\,mV\\      
-      $\sqrt{2D}$  & noise strength &  0.01848\,mV$\sqrt{\textup{s}}$ \\      
+      $\mu$  & bias current &  -17.1875\\      
+      $\sqrt{2D}$  & noise strength &  0.01848 \\      
       $\tau_{A}$  & adaption time constant &  0.111759\,s\\      
-      $\Delta A$  & adaption strength &  0.122197\,mVs\\      
+      $\Delta A$  & adaption strength &  0.122197\\      
       $\tau_{d}$  & time constant of dendritic low-pass filter &  0.002463\,s\\      
       $t_{ref}$  & absolute refractory period &  0.000965\,s\\     
 	  $\Delta t$  & time step &  0.00005\,s\\           
     \end{tabular}
   \end{center}
 \end{table}
+\begin{figure*}[tp]
+  \includegraphics{parameter_distribution}
+  \caption{\label{parameter_distribution} The distribution of the model parameters.
+}
+\end{figure*}
 
-\note[SR]{t Median Parameter sind da. Die Werte sind dann doch sehr klein sollte ich das in Sekunden umrechnen? Auch noch ein Bild der Parameter Vert}
-\note[SR]{Die Tabelle ist sehr ähnlich der in der Masterarbeit von Alex (Table 3), die Einheiten in der Tabelle der Masterarbeit scheinen jedoch nicht zu stimmen (ich denke es müssten Sekunden und keine Millisekunden sein). Die Einheiten habe ich mir bei einem Abgleich der Werte der csv Tabelle und dem Parameter Wertebereich in den Bildern der Masterabeit abgeleitet (figure 19).}
 
 
 
 
 \section{Numerical implementation}
+
+
+
 
 \note[JB]{Sascha: This is Alexander Ott's code from the git repository, right?}
 \note[SR]{Yes that is correct.}
@@ -156,6 +164,6 @@ For the intrinsic noise of the model $\xi(t)$ in each time step $i$ a random num
 The noise strength values from the table in fact equal $\sqrt{2D}$ and not $D$.
 
 \note[JB]{we need to clean up that noise issue}
-\note[SR]{Wie genau?}
+\note[SR]{Mascha hat mir jetzt auch ein PDF File geschickt wie die das machen. Sollen wir einfach unsere alles an deren Vorgehen anpassen?}
 
 \end{document}
