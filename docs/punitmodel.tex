@@ -163,7 +163,48 @@ For the intrinsic noise of the model $\xi(t)$ in each time step $i$ a random num
 
 The noise strength values from the table in fact equal $\sqrt{2D}$ and not $D$.
 
+
+
 \note[JB]{we need to clean up that noise issue}
-\note[SR]{Mascha hat mir jetzt auch ein PDF File geschickt wie die das machen. Sollen wir einfach unsere alles an deren Vorgehen anpassen?}
+\note[SR]{D in Tabelle angepasst, D im Code angepasst, nnoise mal Wurzel dt auch machen?}
+
+
+
+\section{Cell Characteristics}
+The cells were characterized by ten parameters: 6 for the baseline (mean firing rate, coefficient of variation (CV), vector strength (VS), serial correlation, the interspike interval (ISI) histogram, burstiness of the ISI) and 4 for the f-I curve (the detections of $f_{0}$ and $f_{\inf}$ responses for each contrast, the slope of the linear fit into the $f_{\inf}$ and the frequency trace of one
+step response of $f_{0}$). These parameters will be described in the following paragraphs.
+
+
+For the baseline the mean firing rate was calculated by dividing the number of spikes in the recording by the recording time.
+
+The coefficient of variation
+\begin{equation}
+  \label{CV}
+  CV = \frac{STD(ISI)}{\langle ISI \rangle}.
+\end{equation}
+is defined as the standard deviation (STD) of the interspike intervals ($ISI$) divided by the mean ISI.
+
+The vector strength is a measure of how strong the cell locks to a phase of the EOD. It was calculated, by placing each spike on a unit circle depending on the relative spike time $t_{i}$ of how much time has passed since the start of
+the current EOD period in relation to the EOD period length. This set of vectors is then averaged and the absolute value of this average vector describes the VS. If the VS is zero the spikes happen equally in all phases of the EOD while if it is one all spikes happen at the exact same phase of the EOD.
+\begin{equation}
+  \label{vs}
+  vs = |\frac{1}{n} \sum_n e^{i\omega t_{i}}|.
+\end{equation}
+
+The serial correlation with lag k (SCk) of $T$ is a measure how the ISI $T_{i}$ (the i-th ISI) influences the $T_{i+k}$ the ISI with a lag of k intervals.
+
+The ISI-histogram was calculated within a range of 0--50 \,ms and a bin size of 0.1\,ms. The burstiness was calculated as the percentage of ISI smaller than 2.5 EOD periods multiplied by the average ISI. This gives a rough measure of how often a cell fires in the immediately following EOD periods compared to its average firing frequency.
+
+P-units react to a step in EOD amplitude with a strong onset response decaying back to a steady state response. This
+adaption behavior of the cell was characterized by the f-I curve measurements. First the ISI frequency trace for each stimulus was calculated. The ISI frequency of a time point $t$ is defined as $\frac{1}{T_{i}}$ with $T_{i}$ the ISI the time point t falls into. This gives a frequency trace
+starting with the first spike and ending at the last spike. For further analysis, all trials of a specific contrast were averaged over the trials with the resolution of the sampling rate. This results in a trial-averaged step response for each contrast. In this firing frequency trace the baseline frequency, the onset $f_{0}$ and steady-state $f_{\inf}$ response were detected. The baseline frequency was measured as the mean of the firing frequency 25\,ms after recording start up to 25\,ms before the stimulus start. $f_{0}$ was then defined as the largest deviation from the baseline frequency, within the first 25\,ms after
+stimulus onset. If there was no deviation farther than the minimum or maximum before the stimulus start, then the average frequency in that 25\,ms time window was used. This
+approximation made the detection of $f_{0}$ more stable for small contrasts and trials with high variation in their firing rates. The $f_{\inf}$ response was estimated as the average firing frequency in the 100\,ms time window ending 25\,ms before the end of the stimulus. Afterwards a Boltzmann function was fitted to the onset response and a rectified line:
+\begin{equation}
+  \label{f_inf}
+  f_{\inf}(I) = \lfloor mI+c \rfloor_0.
+\end{equation}
+was fitted to the steady-state responses.
+
 
 \end{document}
